@@ -1,0 +1,59 @@
+---
+title: "Jack Hughes PSA 10 Price Compared To Sold Date Regressions"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Imports needed library
+library(stargazer)
+library(webshot2)
+
+# Importing csvs
+cards <- read.csv("~/GitHub/final-project-yurcichj/df1_output.csv")
+
+expensivecards <- read.csv("~/GitHub/final-project-yurcichj/dfE_output.csv")
+
+#Running regressions (ols, filtered ols, and polynomial regressions)
+ols <- lm(Log.of.Price ~ Sold.After.2.22.26 + Log.of.Shipping + Rating, data = cards)
+
+filteredols <- lm(Log.of.Price ~ US.Seller + Log.of.Shipping + Rating, data = expensivecards)
+
+polynomial <- lm(Log.of.Price ~ poly(Log.of.Shipping, 2) + Rating + Sold.After.2.22.26, data = cards)
+```
+
+```{r table, results='asis'}
+# Creates html file
+html_out <- tempfile(fileext = ".html")
+
+# Creates a regression table with all regressions
+stargazer(
+  polynomial, filteredols,
+  type = "html",
+  title = "Jack Hughes PSA 10 - Regression Results",
+  dep.var.labels = "Log of Price",
+  column.labels = c("All Cards", "Expensive Cards"),
+  covariate.labels = c(
+    "Log of Shipping",
+    "Log of Shipping\u00b2",
+    "Sold After 2/22/26",
+    "Log of Shipping"
+  ),
+  omit = c("Rating", "US.Seller"),
+  omit.labels = c("Rating controlled", "US Seller controlled"),
+  notes = "Data sourced from eBay sold listings via SerpAPI",
+  notes.append = FALSE,
+  dep.var.caption = "",
+  star.cutoffs = c(0.1, 0.05, 0.01),
+  out = html_out
+)
+
+# Convert HTML to JPG
+webshot(html_out, "regression_table.jpg", zoom = 2)
+```
+```{r}
+# For my regressions, we can interpret a few things. Firstly, we can see that there is around a 5-6.3% increase in sold card prices after the Olympics depending on the model, verifying my hypothesis. Second, the constants are both statistically significant to the 99th percent, further solidifying my hypothesis. However, even when controlling for US seller and rating, most of the other variables are not statistically significant whatsoever, with only the non-polynomial log of shipping having any statistical significance. R-squared and adjusted R-squared is also very small, but I don't worry about this too much due to my strong statistical significance. Observations vary significantly by model constraints and are less than I desire due to the small time-frame for the research. Overall, I think my findings confirm my hypothesis, that prices of cards increased, albeit slightly, after the "Golden Goal" in 2026.
+```
